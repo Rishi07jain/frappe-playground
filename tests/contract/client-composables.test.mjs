@@ -460,6 +460,7 @@ test('usePlaygroundLifecycle manages boot lifecycle, progress tracking, and erro
   const { result: lifecycle, unmount } = withVueApp(() => {
     return usePlaygroundLifecycle({
       createRuntime: () => fakePlayground,
+      experienceBoot: null,
       listSessions: () => [{ id: 'test-session-id', name: 'Test' }],
       processFlags: async () => ({
         initialPath: '/desk',

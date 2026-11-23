@@ -6,6 +6,11 @@
 
 # Frappe Playground
 
+> [!NOTE]
+> **This branch is the ERPNext Experience Center.** It boots straight into a seeded ERPNext
+> desk with an edit guard and 17 guided tours. See [EXPERIENCE_CENTER.md](EXPERIENCE_CENTER.md)
+> for what changed and how to run it. Build with `VITE_EXPERIENCE_CENTER=false` for the plain playground.
+
 Run Frappe Framework entirely in the browser with Pyodide and WebAssembly. Frappe Playground provides persistent browser-local sites, optional apps, and a static deployment that does not require a Python application server.
 
 > [!CAUTION]

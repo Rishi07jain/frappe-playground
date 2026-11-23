@@ -230,7 +230,7 @@ test('late runtime failure clears readiness and disposes the failed worker', asy
   const renderer = createRenderer({ createComment: () => ({}), insert() {}, remove() {}, parentNode() {}, nextSibling() {} })
   let lifecycle
   const app = renderer.createApp({ setup() {
-    lifecycle = usePlaygroundLifecycle({ createRuntime: () => runtime, listSessions: () => [], processFlags: async () => ({ initialPath: '/' }) })
+    lifecycle = usePlaygroundLifecycle({ createRuntime: () => runtime, experienceBoot: null, listSessions: () => [], processFlags: async () => ({ initialPath: '/' }) })
     return () => null
   } })
   try {

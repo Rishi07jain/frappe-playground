@@ -5,10 +5,13 @@ import { listInstanceSessions } from '../playground/session.js'
 import { processBootFlags } from '../playground/boot-flags.js'
 import { useFrameNavigation } from './use-frame-navigation.js'
 import { useAppManager } from './use-app-manager.js'
+import { EXPERIENCE_CENTER } from '../playground/config.js'
+import { runExperienceBoot } from '../experience/boot.js'
 
 export function usePlaygroundLifecycle({
   createRuntime = createPlayground,
   processFlags = processBootFlags,
+  experienceBoot = EXPERIENCE_CENTER.enabled ? runExperienceBoot : null,
   listSessions = listInstanceSessions,
   window: win = globalThis.window,
 } = {}) {
@@ -22,7 +25,12 @@ export function usePlaygroundLifecycle({
     { label: 'Loading Frappe', status: 'pending', startTime: null, elapsed: null },
     { label: 'Loading Database', status: 'pending', startTime: null, elapsed: null },
     { label: 'Starting Frappe', status: 'pending', startTime: null, elapsed: null },
+    ...(experienceBoot ? [
+      { label: 'Setting up ERPNext', status: 'pending', startTime: null, elapsed: null },
+      { label: 'Loading sample data', status: 'pending', startTime: null, elapsed: null },
+    ] : []),
   ])
+  const EXPERIENCE_STEP_OFFSET = 5
   const stageIndexes = new Map([
     [RuntimeStage.SERVICE_WORKER, 0],
     [RuntimeStage.PYTHON, 1],
@@ -117,8 +125,21 @@ export function usePlaygroundLifecycle({
       })
 
       if (!isCurrent()) return
+      let initialPath = result.initialPath
+      if (experienceBoot) {
+        const experience = await experienceBoot({
+          playground: current,
+          signal: current.abortController.signal,
+          instanceId: instanceId.value,
+          installApp: appId => apps.installBootApp(appId, current),
+          onStep: (index, status) => updateStep(EXPERIENCE_STEP_OFFSET + index, status),
+        })
+        if (!isCurrent()) return
+        // An explicit ?path= still wins, so a link can open a specific page.
+        if (!params.get('path')) initialPath = experience.initialPath
+      }
       installedApps.value = current.listInstalledApps()
-      address.value = result.initialPath
+      address.value = initialPath
 
       runtimeState.value = 'ready'
       frameSrc.value = frameUrl(address.value)
@@ -129,7 +150,7 @@ export function usePlaygroundLifecycle({
         win.history.replaceState(null, '', win.location.pathname)
       }
 
-      if (session.freshSession && !result.autoLogin && !result.skipOnboarding) {
+      if (!experienceBoot && session.freshSession && !result.autoLogin && !result.skipOnboarding) {
         showIntroDialog.value = true
       }
     } catch (error) {

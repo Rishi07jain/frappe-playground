@@ -27,14 +27,40 @@ export async function installSiteOps(pyodide, siteOpsSource) {
   return installPolyfillModule(pyodide, 'site_ops', siteOpsSource)
 }
 
+/**
+ * Experience Center: writes the sample-data module into the frappe package, so the
+ * desk can call it as /api/method/frappe.experience_center.<fn>. Frappe only resolves
+ * API methods whose first segment is an installed app, which is why it lives there.
+ * The file goes to the in-memory filesystem and is rewritten on every boot.
+ * @param {object} pyodide - Pyodide instance.
+ * @param {string} source - Python module source code.
+ */
+export async function installExperienceCenter(pyodide, source) {
+  if (!source) return
+  pyodide.globals.set('experience_center_source', source)
+  try {
+    await pyodide.runPythonAsync(`
+import importlib.util, os
+_spec = importlib.util.find_spec('frappe')
+if _spec and _spec.origin:
+    with open(os.path.join(os.path.dirname(_spec.origin), 'experience_center.py'), 'w') as _f:
+        _f.write(experience_center_source)
+del _spec
+    `)
+  } finally {
+    pyodide.globals.delete?.('experience_center_source')
+  }
+}
+
 export class PythonBridge {
-  constructor({ pyodide, mocksSource, wsgiSource, cookieJarJson, mariadbPolyfillsSource, siteOpsSource }) {
+  constructor({ pyodide, mocksSource, wsgiSource, cookieJarJson, mariadbPolyfillsSource, siteOpsSource, experienceCenterSource }) {
     this.pyodide = pyodide
     this.mocksSource = mocksSource
     this.wsgiSource = wsgiSource
     this.cookieJarJson = cookieJarJson
     this.mariadbPolyfillsSource = mariadbPolyfillsSource
     this.siteOpsSource = siteOpsSource
+    this.experienceCenterSource = experienceCenterSource
   }
 
   async configure() {
@@ -53,6 +79,7 @@ mariadb_polyfills.install()
     }
 
     await this.pyodide.runPythonAsync(this.wsgiSource)
+    await installExperienceCenter(this.pyodide, this.experienceCenterSource)
     if (this.cookieJarJson) {
       this.pyodide.globals.set('temp_cookie_json', this.cookieJarJson)
       await this.pyodide.runPythonAsync(`

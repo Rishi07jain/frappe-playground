@@ -6,11 +6,12 @@ import { fileURLToPath } from 'node:url'
 const projectRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const pythonDir = path.join(projectRoot, 'runtime/python')
 const outputDir = path.join(projectRoot, 'artifacts/generated')
-const [frappeMocksSource, wsgiServerSource, mariadbPolyfillsSource, siteOpsSource] = await Promise.all([
+const [frappeMocksSource, wsgiServerSource, mariadbPolyfillsSource, siteOpsSource, experienceCenterSource] = await Promise.all([
   readFile(path.join(pythonDir, 'frappe_mocks.py'), 'utf8'),
   readFile(path.join(pythonDir, 'wsgi_server.py'), 'utf8'),
   readFile(path.join(pythonDir, 'mariadb_polyfills.py'), 'utf8'),
   readFile(path.join(pythonDir, 'site_ops.py'), 'utf8'),
+  readFile(path.join(pythonDir, 'experience_center.py'), 'utf8'),
 ])
 
 await mkdir(outputDir, { recursive: true })
@@ -23,6 +24,7 @@ await writeFile(
     `export const WSGI_SERVER_SOURCE = ${JSON.stringify(wsgiServerSource)}`,
     `export const MARIADB_POLYFILLS_SOURCE = ${JSON.stringify(mariadbPolyfillsSource)}`,
     `export const SITE_OPS_SOURCE = ${JSON.stringify(siteOpsSource)}`,
+    `export const EXPERIENCE_CENTER_SOURCE = ${JSON.stringify(experienceCenterSource)}`,
     '',
   ].join('\n'),
 )

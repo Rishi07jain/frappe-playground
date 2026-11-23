@@ -1,5 +1,5 @@
 // Frappe Playground — Pyodide server worker entry point
-import { FRAPPE_MOCKS_SOURCE, MARIADB_POLYFILLS_SOURCE, SITE_OPS_SOURCE, WSGI_SERVER_SOURCE } from '/generated/python-sources.js'
+import { EXPERIENCE_CENTER_SOURCE, FRAPPE_MOCKS_SOURCE, MARIADB_POLYFILLS_SOURCE, SITE_OPS_SOURCE, WSGI_SERVER_SOURCE } from '/generated/python-sources.js'
 import {
   ProtocolMessageType,
   RuntimeStage,
@@ -145,6 +145,7 @@ async function bootPython() {
     wsgiSource: WSGI_SERVER_SOURCE,
     mariadbPolyfillsSource: MARIADB_POLYFILLS_SOURCE,
     siteOpsSource: SITE_OPS_SOURCE,
+    experienceCenterSource: EXPERIENCE_CENTER_SOURCE,
     cookieJarJson: stateStore.cookieJarJson,
   })
   await bridge.configure()

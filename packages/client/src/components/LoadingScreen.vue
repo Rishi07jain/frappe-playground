@@ -4,7 +4,7 @@
       <BrandIcon clip-id="frappe-loading-brand-clip" class="h-14 w-14 mb-1.5 text-ink-gray-9" />
       <div class="mt-4 flex w-full max-w-[320px] flex-col gap-3 rounded-6 bg-surface-base p-5 text-left shadow-sm">
         <div class="mb-1">
-          <p class="m-0 text-base font-semibold text-ink-gray-9 mb-3">Brewing your Frappe</p>
+          <p class="m-0 text-base font-semibold text-ink-gray-9 mb-3">{{ title || 'Brewing your Frappe' }}</p>
           <Progress :value="progress" :intervals="steps.length" />
         </div>
         <div v-for="(step, idx) in steps" :key="idx" class="flex items-center justify-between gap-3 text-[13px]" :class="step.status === 'pending' ? 'text-ink-gray-4' : 'text-ink-gray-8'">
@@ -50,6 +50,10 @@ import { CheckCircle2, Loader2, Circle, Rocket } from '@lucide/vue'
 import BrandIcon from './BrandIcon.vue'
 
 const props = defineProps({
+  title: {
+    type: String,
+    default: '',
+  },
   steps: {
     type: Array,
     required: true,

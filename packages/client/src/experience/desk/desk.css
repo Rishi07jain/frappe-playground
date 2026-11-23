@@ -1,0 +1,87 @@
+/* ERPNext Experience Center: styles injected into the desk. Frappe's own CSS variables
+   are used throughout, so light and dark follow the desk theme. */
+
+.ec-overlay { position: fixed; inset: 0; z-index: 1060; pointer-events: none; display: none; }
+.ec-overlay.is-on { display: block; }
+/* While a tour plays the visitor watches: clicks on the desk are held back. */
+.ec-overlay .ec-block { position: absolute; inset: 0; pointer-events: auto; background: transparent; }
+
+.ec-spot {
+  position: fixed; border-radius: 10px; pointer-events: none;
+  box-shadow: 0 0 0 2px var(--gray-900, #171717), 0 0 0 9999px rgba(23, 23, 23, .28);
+  transition: left .35s ease, top .35s ease, width .35s ease, height .35s ease;
+}
+[data-theme="dark"] .ec-spot { box-shadow: 0 0 0 2px var(--gray-100, #f2f2f2), 0 0 0 9999px rgba(0, 0, 0, .55); }
+
+.ec-cursor {
+  position: fixed; left: 0; top: 0; width: 22px; height: 22px; pointer-events: none; z-index: 2;
+  transition: transform .6s cubic-bezier(.4, .1, .2, 1); will-change: transform;
+}
+.ec-cursor svg { display: block; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .3)); }
+.ec-ripple {
+  position: absolute; left: -9px; top: -9px; width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--gray-900, #171717); opacity: 0; pointer-events: none;
+}
+.ec-ripple.go { animation: ec-ripple .45s ease-out; }
+@keyframes ec-ripple { from { transform: scale(.4); opacity: .7; } to { transform: scale(1.6); opacity: 0; } }
+
+.ec-tip {
+  position: fixed; width: 340px; max-width: calc(100vw - 24px); pointer-events: auto; z-index: 3;
+  background: var(--fg-color, #fff); color: var(--text-color, #171717);
+  border: 1px solid var(--border-color, #ededed); border-radius: 12px; padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 18px 48px -12px rgba(0, 0, 0, .28);
+  font-size: var(--text-base, 14px); line-height: 1.5;
+  transition: left .3s ease, top .3s ease;
+}
+.ec-tip-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.ec-tip-count { font-size: var(--text-xs, 12px); color: var(--text-muted, #7c7c7c); }
+.ec-tip-x {
+  border: 0; background: transparent; color: var(--text-muted, #7c7c7c); font-size: 18px; line-height: 1;
+  padding: 2px 6px; border-radius: 6px; cursor: pointer;
+}
+.ec-tip-x:hover { background: var(--subtle-fg, #f3f3f3); color: var(--text-color, #171717); }
+.ec-tip-title { font-weight: 600; font-size: var(--text-md, 15px); color: var(--heading-color, var(--text-color)); margin-bottom: 4px; }
+.ec-tip-text { color: var(--text-color, #383838); }
+.ec-watch { display: block; margin-top: 8px; color: var(--text-muted, #7c7c7c); font-size: var(--text-sm, 13px); }
+.ec-tip-error {
+  margin-top: 8px; padding: 8px 10px; border-radius: 8px; font-size: var(--text-sm, 13px);
+  background: var(--bg-red, #fff0f0); color: var(--text-on-red, #cc2929);
+}
+.ec-tip-foot { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
+.ec-tip-foot .btn[disabled] { opacity: .55; }
+
+.ec-done .ec-rate { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color, #ededed); }
+.ec-rate-q { font-size: var(--text-sm, 13px); color: var(--text-muted, #7c7c7c); margin-bottom: 6px; }
+.ec-rate-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.ec-rate-n {
+  width: 32px; height: 28px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border-color, #ededed); background: var(--control-bg, #f3f3f3); color: var(--text-color, #171717);
+}
+.ec-rate-n[aria-pressed="true"] { background: var(--gray-900, #171717); color: var(--gray-50, #fff); border-color: transparent; }
+[data-theme="dark"] .ec-rate-n[aria-pressed="true"] { background: var(--gray-100, #f2f2f2); color: var(--gray-900, #171717); }
+.ec-rate-c { margin-bottom: 8px; font-size: var(--text-sm, 13px); }
+.ec-rate-thanks { font-size: var(--text-sm, 13px); color: var(--text-muted, #7c7c7c); }
+
+/* The edit guard: a card over a dimmed desk. */
+.ec-guard {
+  position: fixed; inset: 0; z-index: 1070; display: none; align-items: center; justify-content: center;
+  background: rgba(23, 23, 23, .28); padding: 16px;
+}
+[data-theme="dark"] .ec-guard { background: rgba(0, 0, 0, .55); }
+.ec-guard.is-on { display: flex; }
+.ec-guard-card {
+  width: 420px; max-width: 100%; background: var(--fg-color, #fff); color: var(--text-color, #171717);
+  border: 1px solid var(--border-color, #ededed); border-radius: 12px; padding: 20px 22px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 24px 60px -20px rgba(0, 0, 0, .35);
+}
+.ec-guard-title { font-size: var(--text-lg, 16px); font-weight: 600; color: var(--heading-color, var(--text-color)); margin-bottom: 6px; }
+.ec-guard-text { color: var(--text-color, #383838); margin: 0 0 16px; line-height: 1.5; }
+.ec-guard-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+@media (max-width: 640px) {
+  .ec-tip { left: 12px !important; right: 12px; width: auto; top: auto !important; bottom: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ec-spot, .ec-cursor, .ec-tip { transition: none; }
+  .ec-ripple.go { animation: none; }
+}

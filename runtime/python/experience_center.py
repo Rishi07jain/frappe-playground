@@ -182,7 +182,9 @@ def with_taxes(doc):
 
 
 def insert_tx(doc, submit=True):
-	d = with_taxes(doc) if doc["doctype"] not in ("Stock Entry", "BOM", "Work Order") else frappe.get_doc(doc)
+	# Only sales and purchase documents carry a taxes table (Asset, BOM, Stock Entry... don't).
+	has_taxes = frappe.get_meta(doc["doctype"]).has_field("taxes")
+	d = with_taxes(doc) if has_taxes else frappe.get_doc(doc)
 	d.flags.ignore_permissions = True
 	d.insert()
 	if submit:
@@ -590,6 +592,7 @@ def seed_assets():
 			"available_for_use_date": back(140),
 			"net_purchase_amount": 1450000,
 			"calculate_depreciation": 0,
+			"cost_center": frappe.get_cached_value("Company", COMPANY, "cost_center"),
 		}
 	)
 

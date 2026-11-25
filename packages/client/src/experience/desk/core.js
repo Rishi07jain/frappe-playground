@@ -289,7 +289,12 @@
     var call = frappe.request.call;
     if (!call.__ec) {
       frappe.request.call = function (opts) {
+        // frappe.call moves the method into the URL (/api/method/<cmd>) and drops args.cmd.
         var cmd = (opts && opts.args && opts.args.cmd) || (opts && opts.method);
+        if (!cmd && opts && typeof opts.url === 'string') {
+          var m = opts.url.match(/\/api\/method\/([^?#\/]+)/);
+          if (m) cmd = decodeURIComponent(m[1]);
+        }
         if (!EC.touring && EC.isWrite(cmd)) {
           EC.showGuard(EC.route()[0] === 'Form' ? 'form' : 'write');
           try { if (opts.freeze) frappe.dom.unfreeze(); } catch (e) {}

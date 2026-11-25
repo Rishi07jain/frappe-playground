@@ -24,7 +24,10 @@ const TOURS = [
   ['Manufacturing', 'Finish production'],
 ];
 
-test.describe.configure({ mode: 'serial' });
+// Not serial: a failing tour must not skip the rest. After a failure Playwright starts a
+// fresh worker, and beforeAll boots the Experience Center again. No retries, so every
+// tour gets exactly one honest run.
+test.describe.configure({ mode: 'default', retries: 0 });
 
 /** @type {import('@playwright/test').Page} */
 let page;

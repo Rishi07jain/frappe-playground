@@ -247,6 +247,28 @@ def _qualify_bom_group_by(sql):
     return re.sub(r"\border\s+by\s+idx\b", "order by bom_item.idx", sql, flags=re.IGNORECASE)
 
 
+def _expand_sequence_params(query, values):
+    """MySQL drivers expand a tuple bound to "IN %s" into "(a, b, c)". sqlite3 can't bind a
+    tuple, so the query reached SQLite as "IN ?" and failed with a syntax error (ERPNext's
+    get_balance_on does this with finance books). Expand those placeholders here."""
+    if not isinstance(values, (list, tuple)) or not any(isinstance(v, (list, tuple)) for v in values):
+        return query, values
+    parts = str(query).split("%s")
+    if len(parts) != len(values) + 1:
+        return query, values
+    out, flat = [parts[0]], []
+    for value, tail in zip(values, parts[1:]):
+        if isinstance(value, (list, tuple)):
+            items = list(value) or [None]
+            out.append("(" + ", ".join(["%s"] * len(items)) + ")")
+            flat.extend(items)
+        else:
+            out.append("%s")
+            flat.append(value)
+        out.append(tail)
+    return "".join(out), tuple(flat)
+
+
 def rewrite_sql_for_sqlite(sql):
     """Apply every MariaDB -> SQLite translation to one query string."""
     sql = str(sql)
@@ -819,6 +841,7 @@ def install():
             return self._cursor.execute("SELECT 1 WHERE 0")
 
         query = rewrite_sql_for_sqlite(query)
+        query, values = _expand_sequence_params(query, values)
         query = query.replace("%s", "?")
         try:
             if isinstance(values, dict):

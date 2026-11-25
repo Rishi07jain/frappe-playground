@@ -121,7 +121,20 @@ for (const [module, title] of TOURS) {
       const next = desk().locator('.ec-tip [data-ec="next"]:not([disabled])');
       const doneCard = desk().locator('.ec-done');
       const failed = desk().locator('.ec-tip-error');
-      await expect(next.or(doneCard).or(failed)).toBeVisible({ timeout: 120000 });
+      try {
+        await expect(next.or(doneCard).or(failed)).toBeVisible({ timeout: 120000 });
+      } catch (e) {
+        // Say where the tour was stuck: the step card (if any), its Next state and the route.
+        const tip = desk().locator('.ec-tip');
+        const tipText = (await tip.count()) ? (await tip.first().innerText()).replace(/\s+/g, ' ') : '(no step card)';
+        const nextState = (await desk().locator('.ec-tip [data-ec="next"]').count())
+          ? ((await desk().locator('.ec-tip [data-ec="next"]').first().isDisabled()) ? 'Next disabled' : 'Next enabled')
+          : 'no Next button';
+        const route = await (await deskFrame()).evaluate(() => (window.frappe && frappe.get_route_str && frappe.get_route_str()) || location.pathname).catch(() => '?');
+        const dialogs = await desk().locator('.modal.show .modal-title, .msgprint').allInnerTexts().catch(() => []);
+        throw new Error(`${title}: stuck at step ${i + 1}: ${tipText} | ${nextState} | route ${route} | dialogs ${JSON.stringify(dialogs).slice(0, 300)}`);
+      }
+      console.log(`[tour] ${title} step ${i + 1}: ${(await desk().locator('.ec-tip').first().innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120)}`);
       if (await failed.isVisible()) {
         throw new Error(`${title}: ${await desk().locator('.ec-tip').innerText()}`);
       }

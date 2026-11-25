@@ -38,7 +38,7 @@ ITEMS = [
 	("DNM-FAB-12", "Denim Fabric 12 oz", "Raw Material", "Meter", 320, 5),
 	("POLY-YRN-30", "Polyester Yarn 30D", "Raw Material", "Kg", 210, 5),
 	("DYE-RED-25", "Reactive Dye Red (25 kg)", "Consumable", "Kg", 760, 18),
-	("BTN-PACK-100", "Shirt Buttons (pack of 100)", "Consumable", "Nos", 90, 18),
+	("BTN-PACK-100", "Shirt Buttons (pack of 100)", "Consumable", "Pack", 90, 18),
 	("SHIRT-CTN-M", "Cotton Shirt, Medium", "Products", "Nos", 650, 5),
 	("KURTA-LIN-L", "Linen Kurta, Large", "Products", "Nos", 1190, 5),
 ]
@@ -300,6 +300,13 @@ def seed_masters():
 				}
 			)
 			add_address(name, "Supplier", s.name, state, city)
+
+	# Buttons are bought by the pack of 100 and a shirt uses 8, so the BOM needs
+	# 0.08 of a pack. "Nos" only allows whole numbers, so packs get their own UOM.
+	if not frappe.db.exists("UOM", "Pack"):
+		frappe.get_doc({"doctype": "UOM", "uom_name": "Pack", "must_be_whole_number": 0}).insert(ignore_permissions=True)
+	else:
+		frappe.db.set_value("UOM", "Pack", "must_be_whole_number", 0)
 
 	# Items with GST templates and prices.
 	for code, name, group, uom, sell, pct in ITEMS + SERVICES:

@@ -46,7 +46,7 @@ test.beforeAll(async ({ browser }) => {
   // Print boot progress and errors to the CI log, so a stuck boot shows where it stopped.
   page.on('console', m => {
     const t = m.text();
-    if (m.type() === 'error' || /experience|seed|setup|install|boot/i.test(t)) console.log(`[browser:${m.type()}] ${t.slice(0, 500)}`);
+    if (m.type() === 'error' || /experience|seed|setup|install|boot/i.test(t)) console.log(`[browser:${m.type()}] ${t.slice(0, /WSGI 500|Traceback/.test(t) ? 8000 : 500)}`);
   });
   let lastStep = '';
   const timer = setInterval(async () => {

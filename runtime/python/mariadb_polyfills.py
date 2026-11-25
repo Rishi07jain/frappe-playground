@@ -218,7 +218,7 @@ def _strip_union_parentheses(sql):
 
 
 
-_BOM_ITEMS_JOIN = re.compile(r"JOIN\s+`tabItem`\s+item\s+ON\s+item\.name\s*=\s*bom_item\.item_code", re.IGNORECASE)
+_BOM_ITEMS_JOIN = re.compile(r"JOIN\s+[`\"]tabItem[`\"]\s+(?:AS\s+)?item\s+ON\s+item\.name\s*=\s*bom_item\.item_code", re.IGNORECASE)
 _BOM_GROUP_BY = re.compile(r"\bgroup\s+by\s+(.+?)(?=\border\s+by\b|$)", re.IGNORECASE | re.DOTALL)
 _BOM_GROUP_COLUMNS = {
     "item_code": "bom_item.item_code",

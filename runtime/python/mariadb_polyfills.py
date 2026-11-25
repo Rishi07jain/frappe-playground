@@ -217,6 +217,36 @@ def _strip_union_parentheses(sql):
     return sql
 
 
+
+_BOM_ITEMS_JOIN = re.compile(r"JOIN\s+`tabItem`\s+item\s+ON\s+item\.name\s*=\s*bom_item\.item_code", re.IGNORECASE)
+_BOM_GROUP_BY = re.compile(r"\bgroup\s+by\s+(.+?)(?=\border\s+by\b|$)", re.IGNORECASE | re.DOTALL)
+_BOM_GROUP_COLUMNS = {
+    "item_code": "bom_item.item_code",
+    "stock_uom": "item.stock_uom",
+    "operation": "bom_item.operation",
+    "operation_row_id": "bom_item.operation_row_id",
+    "secondary_item_type": "bom_item.secondary_item_type",
+}
+
+
+def _qualify_bom_group_by(sql):
+    """ERPNext's get_bom_items_as_dict groups by select aliases (item_code, stock_uom, ...).
+    MariaDB resolves those to the aliases; SQLite sees columns of both joined tables and
+    raises "ambiguous column name". Qualify them the way the select list defines them."""
+    if not _BOM_ITEMS_JOIN.search(sql):
+        return sql
+
+    def fix(match):
+        cols = []
+        for col in match.group(1).split(","):
+            name = col.strip()
+            cols.append(_BOM_GROUP_COLUMNS.get(name.lower(), name))
+        return "group by " + ", ".join(cols) + " "
+
+    sql = _BOM_GROUP_BY.sub(fix, sql)
+    return re.sub(r"\border\s+by\s+idx\b", "order by bom_item.idx", sql, flags=re.IGNORECASE)
+
+
 def rewrite_sql_for_sqlite(sql):
     """Apply every MariaDB -> SQLite translation to one query string."""
     sql = str(sql)
@@ -275,6 +305,7 @@ def rewrite_sql_for_sqlite(sql):
         flags=re.IGNORECASE,
     )
     
+    sql = _qualify_bom_group_by(sql)
     sql = _strip_union_parentheses(sql)
     return sql
 

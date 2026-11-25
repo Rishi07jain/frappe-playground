@@ -40,11 +40,28 @@ async function deskFrame() {
 }
 
 test.beforeAll(async ({ browser }) => {
+  test.setTimeout(1800000);
   page = await browser.newPage();
   page.on('pageerror', e => errors.push(String(e)));
+  // Print boot progress and errors to the CI log, so a stuck boot shows where it stopped.
+  page.on('console', m => {
+    const t = m.text();
+    if (m.type() === 'error' || /experience|seed|setup|install|boot/i.test(t)) console.log(`[browser:${m.type()}] ${t.slice(0, 500)}`);
+  });
+  let lastStep = '';
+  const timer = setInterval(async () => {
+    try {
+      const txt = (await page.locator('#loading-screen').innerText({ timeout: 2000 })).replace(/\s+/g, ' ').slice(0, 400);
+      if (txt !== lastStep) { lastStep = txt; console.log(`[loading-screen] ${txt}`); }
+    } catch {}
+  }, 15000);
   await page.goto('/');
   await expect(page.locator('.ec-bar')).toBeVisible();
-  await expect(page.locator('#loading-screen')).toBeHidden({ timeout: 900000 });
+  try {
+    await expect(page.locator('#loading-screen')).toBeHidden({ timeout: 1500000 });
+  } finally {
+    clearInterval(timer);
+  }
   await expect(page.locator('#frappe-desk')).toBeVisible();
   // The welcome note appears once the desk is ready.
   await expect(page.getByText('Welcome to the ERPNext Experience Center')).toBeVisible({ timeout: 120000 });

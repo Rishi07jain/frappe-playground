@@ -424,7 +424,24 @@
     O.place(null);
     var token = (run.token = {});
     var act = ACT[step.kind];
-    Promise.resolve().then(function () { return act ? act(step) : null; }).then(function (target) {
+    // A step that never settles would leave the card on "Playing…" for good. Give up
+    // after a minute with Try again / Skip, and log what the desk was doing.
+    var watchdog = new Promise(function (resolve, reject) {
+      setTimeout(function () {
+        if (!run || run.token !== token) return;
+        var info = {
+          step: step.kind, route: EC.route().join('/'),
+          ajax: window.frappe && frappe.request ? frappe.request.ajax_count : null,
+          frozen: !!document.querySelector('.freeze:not(.hide), #freeze.in'),
+          dialog: (visibleDialog() && visibleDialog().title) || null,
+          msgprint: (document.querySelector('.msgprint') || {}).textContent || null,
+          sidebar: !!visibleIn('.body-sidebar'), hidden: document.visibilityState,
+        };
+        console.warn('[Experience] tour step timed out ' + JSON.stringify(info));
+        reject(new Error('This step took too long'));
+      }, 60000);
+    });
+    Promise.race([Promise.resolve().then(function () { return act ? act(step) : null; }), watchdog]).then(function (target) {
       if (!run || run.token !== token) return;
       step._form = formKey();
       if (step._form) run.doc = frm().doc;

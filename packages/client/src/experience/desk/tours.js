@@ -289,6 +289,7 @@
   T['asset'] = { build: function (h) {
     return openNew('Asset', 'A blank asset opens.',
       'Your accounts team just got a new ₹78,000 laptop. It isn’t an expense, it’s an asset, and it should lose value over three years. Let’s set that up.').concat([
+      field('asset_type', 'Existing Asset', 'Say how it was bought', 'The laptop was bought outside ERPNext, so it goes in as an existing asset. A laptop bought through a purchase invoice would link to that bill instead.'),
       field('item_code', 'Laptop - Dell Latitude 5440', 'Pick the asset item', 'The laptop model, which is marked as a fixed asset in your item list.'),
       field('asset_name', 'Laptop for Accounts Team', 'Name it', 'A name your team will recognise when they see it in the register.'),
       field('asset_category', 'Computers', 'Choose the category', 'Computers. The category carries the accounts, so nobody sets them each time.'),
@@ -318,6 +319,7 @@
           nm + ' is moving to the ' + to + ', and Farhan will be responsible for it. Let’s record that so the register stays true.').concat([
           createFrom('Asset Movement', 'The asset and where it is now are filled in.', { group: 'Actions', label: 'Transfer Asset',
             title: 'Transfer the asset', text: 'The Actions menu holds what you can do with an asset. Transfer Asset starts a movement with the asset and where it is now already filled in.' }),
+          field('purpose', 'Transfer', 'Say why it’s moving', 'A transfer: it changes place and hands, and stays in the company.'),
           row('assets', 0, { target_location: to }, 'Choose the new location', 'It’s headed to the ' + to + '.', 'asset'),
           row('assets', 0, { to_employee: emp }, 'Choose the new custodian', 'Farhan takes charge of it from today.', 'asset'),
           save('Asset Movement'),

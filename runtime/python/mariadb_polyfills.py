@@ -269,6 +269,59 @@ def _expand_sequence_params(query, values):
     return "".join(out), tuple(flat)
 
 
+def _top_level_keywords(sql):
+    """Positions of SELECT / GROUP BY / HAVING / ORDER BY / LIMIT outside parentheses and quotes."""
+    found, depth, i, n, quote = [], 0, 0, len(sql), None
+    pattern = re.compile(r"(SELECT|GROUP\s+BY|HAVING|ORDER\s+BY|LIMIT)\b", re.IGNORECASE)
+    while i < n:
+        c = sql[i]
+        if quote:
+            if c == quote:
+                quote = None
+        elif c in "'\"`":
+            quote = c
+        elif c == "(":
+            depth += 1
+        elif c == ")":
+            depth -= 1
+        elif depth == 0 and (i == 0 or not (sql[i - 1].isalnum() or sql[i - 1] == "_")):
+            m = pattern.match(sql, i)
+            if m:
+                found.append((re.sub(r"\s+", " ", m.group(1).upper()), i, m.end()))
+                i = m.end()
+                continue
+        i += 1
+    return found
+
+
+def _having_without_group_by(sql):
+    """MariaDB treats HAVING without GROUP BY as a filter on the select list's aliases
+    (ERPNext's outstanding-invoice query does this). SQLite rejects it with "HAVING clause
+    on a non-aggregate query", so move the select into a subquery and filter it with WHERE."""
+    if "having" not in sql.lower():
+        return sql
+    kws = _top_level_keywords(sql)
+    selects = [k for k in kws if k[0] == "SELECT"]
+    if not selects:
+        return sql
+    start = selects[-1][1]
+    after = [k for k in kws if k[1] > start]
+    having = [k for k in after if k[0] == "HAVING"]
+    if not having or any(k[0] == "GROUP BY" for k in after):
+        return sql
+    h = having[0]
+    ends = [k[1] for k in after if k[1] > h[1] and k[0] in ("ORDER BY", "LIMIT")]
+    stop = ends[0] if ends else len(sql)
+    tail = sql[stop:]
+    if tail.strip().upper().startswith("ORDER BY") and "." in tail:
+        return sql  # an ORDER BY on table-qualified columns would not survive the wrap
+    return (
+        sql[:start]
+        + "SELECT * FROM (" + sql[start:h[1]] + ") AS _ec_having WHERE "
+        + sql[h[2]:stop] + " " + tail
+    )
+
+
 def rewrite_sql_for_sqlite(sql):
     """Apply every MariaDB -> SQLite translation to one query string."""
     sql = str(sql)
@@ -328,6 +381,7 @@ def rewrite_sql_for_sqlite(sql):
     )
     
     sql = _qualify_bom_group_by(sql)
+    sql = _having_without_group_by(sql)
     sql = _strip_union_parentheses(sql)
     return sql
 

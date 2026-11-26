@@ -248,13 +248,22 @@
     save: function () {
       var f = frm();
       var btn = f.page.btn_primary && f.page.btn_primary[0];
+      var before = f.docname;
       return O.moveTo(btn).then(function () { return O.click(); }).then(function () {
+        // A new document gets its real name when it saves. Some forms (Asset) change a
+        // value right after saving and look dirty again, so the new name counts as saved.
+        var stored = function () { return !f.doc.__islocal && (!f.is_dirty() || f.docname !== before); };
         var saved = function () { return !f.doc.__islocal && !f.is_dirty(); };
         return Promise.race([
           Promise.resolve(f.save()).catch(function () {}),
-          EC.waitFor(function () { return saved() || takeErrorPeek(); }, 30000).catch(function () {}),
+          EC.waitFor(function () { return stored() || takeErrorPeek(); }, 30000).catch(function () {}),
         ]).then(EC.waitIdle).then(function () {
-          check(saved(), 'Saving didn’t go through');
+          check(stored(), 'Saving didn’t go through');
+          // Close an informational message (e.g. "Asset Depreciation Schedules created")
+          // so it doesn't cover the next step.
+          if (takeErrorPeek()) { try { frappe.msg_dialog.hide(); } catch (e) {} }
+          if (!saved()) return Promise.resolve(f.reload_doc()).then(EC.waitIdle);
+        }).then(function () {
           return EC.sleep(EC.pace(300));
         });
       }).then(function () { return visibleIn('.page-head .indicator-pill') || btn; });

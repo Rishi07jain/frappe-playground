@@ -1,7 +1,8 @@
 /* ERPNext Experience Center: styles injected into the desk. Frappe's own CSS variables
    are used throughout, so light and dark follow the desk theme. */
 
-.ec-overlay { position: fixed; inset: 0; z-index: 1060; pointer-events: none; display: none; }
+/* Above Bootstrap/Frappe modals (1050-1070), so a message ERPNext opens can't cover the step card. */
+.ec-overlay { position: fixed; inset: 0; z-index: 1100; pointer-events: none; display: none; }
 .ec-overlay.is-on { display: block; }
 /* While a tour plays the visitor watches: clicks on the desk are held back. */
 .ec-overlay .ec-block { position: absolute; inset: 0; pointer-events: auto; background: transparent; }
@@ -64,7 +65,7 @@
 
 /* The edit guard: a card over a dimmed desk. */
 .ec-guard {
-  position: fixed; inset: 0; z-index: 1070; display: none; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 1110; display: none; align-items: center; justify-content: center;
   background: rgba(23, 23, 23, .28); padding: 16px;
 }
 [data-theme="dark"] .ec-guard { background: rgba(0, 0, 0, .55); }

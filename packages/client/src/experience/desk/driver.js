@@ -265,6 +265,7 @@
         }).then(function () {
           // Some forms announce what they did after saving ("Asset Depreciation Schedules
           // created…"). The message opens a moment later and would cover the step card.
+          closeMessagesFor(8000);
           return EC.waitFor(takeErrorPeek, EC.pace(2500)).then(closeMessage, function () {});
         }).then(function () {
           return EC.sleep(EC.pace(300));
@@ -364,7 +365,22 @@
 
   function closeMessage() {
     try { if (frappe.msg_dialog) frappe.msg_dialog.hide(); } catch (e) {}
+    // Any other open message box (msgprint can open its own dialog).
+    Array.prototype.forEach.call(document.querySelectorAll('.modal.show'), function (m) {
+      if (m.querySelector('.msgprint')) { try { window.jQuery(m).modal('hide'); } catch (e) {} }
+    });
     return EC.sleep(EC.pace(300));
+  }
+
+  // For a few seconds after a save, close informational messages as they appear.
+  function closeMessagesFor(ms) {
+    var until = Date.now() + ms;
+    (function tick() {
+      if (!run) return;
+      var open = document.querySelector('.modal.show .msgprint');
+      if (open && !document.querySelector('.modal.show .modal-header .indicator.red')) closeMessage();
+      if (Date.now() < until) setTimeout(tick, 250);
+    })();
   }
 
   function takeErrorPeek() {

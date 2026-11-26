@@ -261,8 +261,11 @@
           check(stored(), 'Saving didn’t go through');
           // Close an informational message (e.g. "Asset Depreciation Schedules created")
           // so it doesn't cover the next step.
-          if (takeErrorPeek()) { try { frappe.msg_dialog.hide(); } catch (e) {} }
           if (!saved()) return Promise.resolve(f.reload_doc()).then(EC.waitIdle);
+        }).then(function () {
+          // Some forms announce what they did after saving ("Asset Depreciation Schedules
+          // created…"). The message opens a moment later and would cover the step card.
+          return EC.waitFor(takeErrorPeek, EC.pace(2500)).then(closeMessage, function () {});
         }).then(function () {
           return EC.sleep(EC.pace(300));
         });
@@ -359,6 +362,11 @@
     },
   };
 
+  function closeMessage() {
+    try { if (frappe.msg_dialog) frappe.msg_dialog.hide(); } catch (e) {}
+    return EC.sleep(EC.pace(300));
+  }
+
   function takeErrorPeek() {
     var md = frappe.msg_dialog;
     return md && md.$wrapper && md.$wrapper.hasClass('show') && md.$wrapper.find('.msgprint').text().trim() ? 'error' : null;
@@ -435,8 +443,9 @@
     var act = ACT[step.kind];
     // A step that never settles would leave the card on "Playing…" for good. Give up
     // after a minute with Try again / Skip, and log what the desk was doing.
+    var dogTimer;
     var watchdog = new Promise(function (resolve, reject) {
-      setTimeout(function () {
+      dogTimer = setTimeout(function () {
         if (!run || run.token !== token) return;
         var info = {
           step: step.kind, route: EC.route().join('/'),
@@ -451,6 +460,7 @@
       }, 60000);
     });
     Promise.race([Promise.resolve().then(function () { return act ? act(step) : null; }), watchdog]).then(function (target) {
+      clearTimeout(dogTimer);
       if (!run || run.token !== token) return;
       step._form = formKey();
       if (step._form) run.doc = frm().doc;
@@ -459,6 +469,7 @@
       card(step, i, run.steps.length - 1);
       follow();
     }).catch(function (e) {
+      clearTimeout(dogTimer);
       if (!run || run.token !== token) return;
       console.warn('[Experience] tour step failed', step, e);
       card(step, i, run.steps.length - 1, { error: (e && e.message) || 'unknown error' });

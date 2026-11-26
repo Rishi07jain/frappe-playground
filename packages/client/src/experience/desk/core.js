@@ -40,12 +40,19 @@
     });
   };
 
+  /* Frappe v16 freezes the screen with a visible #freeze.in backdrop. A plain
+     ".freeze" selector also matched an element that stays on the page, so every
+     wait ran into its 20 s limit and tours stalled. */
+  EC.frozen = function () {
+    var el = document.getElementById('freeze');
+    return !!(el && el.classList.contains('in') && EC.visible(el));
+  };
+
   /* Resolve once Frappe has no requests in flight and nothing is frozen. */
   EC.waitIdle = function (timeout) {
     var stableSince = 0;
     return EC.waitFor(function () {
-      var busy = (window.frappe && frappe.request && frappe.request.ajax_count > 0) ||
-        document.querySelector('.freeze:not(.hide), #freeze.in');
+      var busy = (window.frappe && frappe.request && frappe.request.ajax_count > 0) || EC.frozen();
       if (busy) { stableSince = 0; return false; }
       if (!stableSince) stableSince = Date.now();
       return Date.now() - stableSince > 250;

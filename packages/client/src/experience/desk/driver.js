@@ -432,7 +432,7 @@
         var info = {
           step: step.kind, route: EC.route().join('/'),
           ajax: window.frappe && frappe.request ? frappe.request.ajax_count : null,
-          frozen: !!document.querySelector('.freeze:not(.hide), #freeze.in'),
+          frozen: EC.frozen(), staleFreeze: Array.prototype.map.call(document.querySelectorAll('.freeze:not(.hide)'), function (e) { return e.tagName + '.' + e.className; }).join(' ').slice(0, 200),
           dialog: (visibleDialog() && visibleDialog().title) || null,
           msgprint: (document.querySelector('.msgprint') || {}).textContent || null,
           sidebar: !!visibleIn('.body-sidebar'), hidden: document.visibilityState,
